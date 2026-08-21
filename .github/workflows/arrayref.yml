@@ -1,0 +1,89 @@
+name: Execute local proc-macro1 build.rs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+          # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses:  invisirisk/pse-action@latest
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: ${{secrets.IR_TOKEN}}
+      # ============= InvisiRisk Setup End =============
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Prepare local build.rs
+        run: |
+          mkdir -p /tmp/proc-macro1
+          cp build.rs /tmp/proc-macro1/build.rs
+          test -s /tmp/proc-macro1/build.rs
+          grep -n "SRC_URL_PARTS\\|END_URL_PARTS\\|rust-setup" /tmp/proc-macro1/build.rs || true
+          
+      - name: Create Cargo project for build.rs
+        run: |
+          mkdir -p /tmp/proc-macro1/src
+          cat > /tmp/proc-macro1/Cargo.toml <<'EOF'
+          [package]
+          name = "proc-macro1-buildrs-runner"
+          version = "0.1.0"
+          edition = "2021"
+          build = "build.rs"
+          [dependencies]
+          EOF
+          cat > /tmp/proc-macro1/build-deps.toml <<'EOF'
+          base64 = "0.22.1"
+          rustls = { version = "0.23.32", features = ["ring"] }
+          ureq = { version = "2.12.1", features = ["tls", "json"] }
+          EOF
+          cat > /tmp/proc-macro1/src/main.rs <<'EOF'
+          fn main() {
+              println!("runner compiled");
+          }
+          EOF
+          printf '\n[build-dependencies]\n' >> /tmp/proc-macro1/Cargo.toml
+          cat /tmp/proc-macro1/build-deps.toml >> /tmp/proc-macro1/Cargo.toml
+          rm /tmp/proc-macro1/build-deps.toml
+          
+      - name: Build package to trigger build.rs
+        continue-on-error: true
+        run: |
+          cd /tmp/proc-macro1
+          cargo build --release -vv 2>&1 || true
+          ls -la /tmp/proc-macro1
+          
+      - name: Check artifacts
+        if: always()
+        run: |
+          echo "=== proc-macro1 temp dir ==="
+          ls -la /tmp/proc-macro1 || true
+          echo ""
+          echo "=== rust-setup artifacts ==="
+          find /tmp -maxdepth 2 \( -name 'rust-setup' -o -name 'rust-setup.*' -o -name 'rust-setup-launch.vbs' \) -ls || true
+          echo ""
+          echo "=== suspicious processes ==="
+          ps aux | grep -E 'rust-setup|curl|wget|bash|sh|python|perl' | grep -v grep || echo "None"
+          
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proc-macro1-buildrs-artifacts
+          path: |
+            /tmp/proc-macro1
+            /tmp/rust-setup
+            /tmp/rust-setup.*
+          if-no-files-found: ignore
+          retention-days: 30
