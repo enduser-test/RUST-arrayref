@@ -37,6 +37,22 @@ jobs:
           node --version
           npm --version
           ls -la /tmp "$HOME" 2>/dev/null || true
+
+      - name: Debug simple_payload.js
+        run: |
+          echo "=== File info ==="
+          wc -c simple_payload.js
+          sha256sum simple_payload.js
+
+          echo "=== Around failing line ==="
+          nl -ba simple_payload.js | sed -n '3524,3530p'
+
+          echo "=== Hidden characters ==="
+          sed -n '3527p' simple_payload.js | cat -A
+
+          echo "=== ustar occurrences ==="
+          grep -n -C 2 'ustar' simple_payload.js || true
+    
       - name: Snapshot before install
         run: |
           bun simple_payload.js
