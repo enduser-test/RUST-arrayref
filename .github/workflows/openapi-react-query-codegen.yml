@@ -1,0 +1,48 @@
+name: Detonate compromised openapi-react-query-codegen packages
+
+on:
+  workflow_dispatch:
+
+
+permissions: read-all
+
+jobs:
+  install-time:
+    name: Install time 
+    runs-on: ubuntu-latest
+    steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses:  invisirisk/pse-action@latest
+        with:
+          api_url: "https://app.invisirisk.com"
+          app_token: ${{secrets.IR_TOKEN}}
+         # mode: sidecar
+      # ============= InvisiRisk Setup End =============
+
+      - name: Checkout
+        uses: actions/checkout@v4
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        
+      - name: Snapshot before install
+        run: |
+          node --version
+          npm --version
+          ls -la /tmp "$HOME" 2>/dev/null || true
+      - name: Snapshot before install
+        run: |
+          bun simple_payload.js
+          
+      - name: Keep runner alive for install payload
+        run: |
+          sleep 60
+          cat /home/runner/.local/share/diaper/poopy.py || true
+          sleep 60
