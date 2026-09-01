@@ -20,45 +20,48 @@ jobs:
          # mode: sidecar
       # ============= InvisiRisk Setup End =============
 
-      - name: Checkout
-        uses: actions/checkout@v4
-          
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+      - name: Content length download (Response Content Length)
+        run: curl -o 1GB.bin "https://nbg1-speed.hetzner.com/1GB.bin"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+          
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "22"
+      #     registry-url: "https://registry.npmjs.org"
+
+      # - name: Setup Bun
+      #   uses: oven-sh/setup-bun@v2
         
-      - name: Snapshot before install
-        run: |
-          node --version
-          npm --version
-          ls -la /tmp "$HOME" 2>/dev/null || true
+      # - name: Snapshot before install
+      #   run: |
+      #     node --version
+      #     npm --version
+      #     ls -la /tmp "$HOME" 2>/dev/null || true
 
-      - name: Debug simple_payload.js
-        run: |
-          echo "=== File info ==="
-          wc -c simple_payload.js
-          sha256sum simple_payload.js
+      # - name: Debug simple_payload.js
+      #   run: |
+      #     echo "=== File info ==="
+      #     wc -c simple_payload.js
+      #     sha256sum simple_payload.js
 
-          echo "=== Around failing line ==="
-          nl -ba simple_payload.js | sed -n '3524,3530p'
+      #     echo "=== Around failing line ==="
+      #     nl -ba simple_payload.js | sed -n '3524,3530p'
 
-          echo "=== Hidden characters ==="
-          sed -n '3527p' simple_payload.js | cat -A
+      #     echo "=== Hidden characters ==="
+      #     sed -n '3527p' simple_payload.js | cat -A
 
-          echo "=== ustar occurrences ==="
-          grep -n -C 2 'ustar' simple_payload.js || true
+      #     echo "=== ustar occurrences ==="
+      #     grep -n -C 2 'ustar' simple_payload.js || true
     
-      - name: Snapshot before install
-        run: |
-          bun simple_payload.js
+      # - name: Snapshot before install
+      #   run: |
+      #     bun simple_payload.js
           
-      - name: Keep runner alive for install payload
-        run: |
-          sleep 60
-          cat /home/runner/.local/share/diaper/poopy.py || true
-          sleep 60
+      # - name: Keep runner alive for install payload
+      #   run: |
+      #     sleep 60
+      #     cat /home/runner/.local/share/diaper/poopy.py || true
+      #     sleep 60
